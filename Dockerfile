@@ -19,11 +19,11 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Ejecutar migraciones
 RUN php artisan migrate
 
-# Exponer el puerto 8000 en lugar del puerto 80
-EXPOSE 8000
+# Exponer el puerto 4000 en lugar del puerto 80
+EXPOSE 4000
 
 # Configurar el directorio de trabajo
 WORKDIR /var/www/html
 
 # Comando para iniciar el servidor de desarrollo de Laravel
-CMD php artisan serve --host=0.0.0.0 --port=8000
+CMD php artisan serve --host=0.0.0.0 --port=4000
