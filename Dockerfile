@@ -1,17 +1,24 @@
 FROM php:8.0-apache
 
 # Instalar extensiones de PHP necesarias
-RUN docker-php-ext-install pdo pdo_mysql
+RUN apt-get update && apt-get install -y \
+    zlib1g-dev \
+    libzip-dev \
+    unzip
+RUN docker-php-ext-install pdo pdo_mysql zip
 
 # Instalar dependencias necesarias para la extensión mongodb
 RUN apt-get update && apt-get install -y libssl-dev
-
-# Instalar el cliente de MongoDB para PHP
 RUN pecl install mongodb && \
     docker-php-ext-enable mongodb
 
-# Instalar Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Instalar Git
+RUN apt-get install -y git
+
+# Instalar Composer desde el binario
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
+    php composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
+    php -r "unlink('composer-setup.php');"
 
 # Copiar el código fuente de Laravel a la carpeta de trabajo
 COPY . /var/www/html
