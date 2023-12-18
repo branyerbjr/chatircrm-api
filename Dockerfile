@@ -10,11 +10,17 @@ RUN apt-get update && apt-get install -y libssl-dev
 RUN pecl install mongodb && \
     docker-php-ext-enable mongodb
 
+# Instalar Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
 # Copiar el código fuente de Laravel a la carpeta de trabajo
 COPY . /var/www/html
 
 # Establecer permisos adecuados
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Instalar dependencias de Composer
+RUN composer install --no-dev --optimize-autoloader
 
 # Ejecutar migraciones
 RUN php artisan migrate
