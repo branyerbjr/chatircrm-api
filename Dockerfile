@@ -16,8 +16,6 @@ COPY . /var/www/html
 # Establecer permisos adecuados
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Ejecutar migraciones
-RUN php artisan migrate
 
 # Exponer el puerto 8000 en lugar del puerto 80
 EXPOSE 8000
