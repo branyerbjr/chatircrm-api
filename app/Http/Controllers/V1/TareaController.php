@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\V1;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Tarea;
 
 class TareaController extends Controller
 {
@@ -13,7 +15,8 @@ class TareaController extends Controller
      */
     public function index()
     {
-        //
+        $tareas = Tarea::all();
+        return response()->json(['tareas' => $tareas], 200);
     }
 
     /**
@@ -24,7 +27,21 @@ class TareaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'descripcion' => 'required|string|max:255',
+            'fechaLimite' => 'required|date',
+            'estado' => 'required|string|max:255',
+            'asignadoA' => 'required|exists:users,id',
+        ]);
+
+        $tarea = Tarea::create([
+            'descripcion' => $request->descripcion,
+            'fechaLimite' => $request->fechaLimite,
+            'estado' => $request->estado,
+            'asignadoA' => $request->asignadoA,
+        ]);
+
+        return response()->json(['tarea' => $tarea], 201);
     }
 
     /**
@@ -35,7 +52,8 @@ class TareaController extends Controller
      */
     public function show($id)
     {
-        //
+        $tarea = Tarea::findOrFail($id);
+        return response()->json(['tarea' => $tarea], 200);
     }
 
     /**
@@ -47,7 +65,23 @@ class TareaController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $tarea = Tarea::findOrFail($id);
+
+        $request->validate([
+            'descripcion' => 'string|max:255',
+            'fechaLimite' => 'date',
+            'estado' => 'string|max:255',
+            'asignadoA' => 'exists:users,id',
+        ]);
+
+        $tarea->update([
+            'descripcion' => $request->descripcion ?? $tarea->descripcion,
+            'fechaLimite' => $request->fechaLimite ?? $tarea->fechaLimite,
+            'estado' => $request->estado ?? $tarea->estado,
+            'asignadoA' => $request->asignadoA ?? $tarea->asignadoA,
+        ]);
+
+        return response()->json(['tarea' => $tarea], 200);
     }
 
     /**
@@ -58,6 +92,8 @@ class TareaController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $tarea = Tarea::findOrFail($id);
+        $tarea->delete();
+        return response()->json(['message' => 'Tarea eliminada correctamente'], 200);
     }
 }

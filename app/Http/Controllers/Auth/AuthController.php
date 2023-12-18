@@ -4,65 +4,99 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 class AuthController extends Controller
 {
+    /**
+     * Register a new user.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'nombre' => 'required|string|max:255',
+        $request->validate([
+            'dni' => 'required|digits:8|unique:users',
+            'nombres' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
-            'dni' => 'required|string|max:8|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:8',
+            'nombreUsuario' => 'required|string|unique:users',
+            'rol' => 'required|string|in:Usuario,Administrador',
+            'perteneceA' => 'required|exists:departamentos,_id',
+            'celular' => 'string|nullable|unique:users,celular,'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 401);
-        }
-
-        $user = CustomUser::create([
-            'nombre' => $request->nombre,
-            'apellidos' => $request->apellidos,
+        $user = User::create([
             'dni' => $request->dni,
+            'nombres' => $request->nombres,
+            'apellidos' => $request->apellidos,
             'email' => $request->email,
-            'password' => bcrypt($request->password),
+            'password' => Hash::make($request->password),
+            'nombreUsuario' => $request->nombreUsuario,
+            'rol' => $request->rol,
+            'perteneceA' => $request->perteneceA,
+            'celular' => $request->celular,
         ]);
 
-        $token = $user->createToken('AppName')->accessToken;
-
-        return response()->json(['token' => $token], 200);
+        return response()->json(['user' => $user], 201);
     }
 
+    /**
+     * Log the user in.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|string',
+    ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $token = $user->createToken('AppName')->accessToken;
+    if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+        $user = Auth::user();
+        $token = Str::random(60); // Genera un token aleatorio, puedes ajustar esto según tus necesidades
 
-            return response()->json(['token' => $token], 200);
-        } else {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+        $user->update(['api_token' => $token]); // Almacena el token en el usuario
+
+        return response()->json(['token' => $token, 'user' => $user], 200);
+    } else {
+        return response()->json(['error' => 'Unauthorized'], 401);
     }
+}
 
+    /**
+     * Get the authenticated user.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function user()
     {
         $user = Auth::user();
-
         return response()->json(['user' => $user], 200);
     }
 
-    public function logout(Request $request)
+    /**
+     * Log the user out.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout()
     {
-        $request->user()->token()->revoke();
+        Sanctum::logout(Auth::user());
 
-        return response()->json(['message' => 'Successfully logged out'], 200);
+        return response()->json(['message' => 'Logged out successfully'], 200);
+    }
+    
+    public function checkAuth()
+    {
+        return response()->json(['authenticated' => true]);
     }
 }

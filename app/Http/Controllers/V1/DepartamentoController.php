@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\V1;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Departamento;
 
 class DepartamentoController extends Controller
 {
@@ -13,7 +15,8 @@ class DepartamentoController extends Controller
      */
     public function index()
     {
-        //
+        $departamentos = Departamento::all();
+        return response()->json(['departamentos' => $departamentos], 200);
     }
 
     /**
@@ -24,7 +27,15 @@ class DepartamentoController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+        ]);
+
+        $departamento = Departamento::create([
+            'nombre' => $request->nombre,
+        ]);
+
+        return response()->json(['departamento' => $departamento], 201);
     }
 
     /**
@@ -35,7 +46,8 @@ class DepartamentoController extends Controller
      */
     public function show($id)
     {
-        //
+        $departamento = Departamento::findOrFail($id);
+        return response()->json(['departamento' => $departamento], 200);
     }
 
     /**
@@ -47,7 +59,17 @@ class DepartamentoController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $departamento = Departamento::findOrFail($id);
+
+        $request->validate([
+            'nombre' => 'string|max:255',
+        ]);
+
+        $departamento->update([
+            'nombre' => $request->nombre ?? $departamento->nombre,
+        ]);
+
+        return response()->json(['departamento' => $departamento], 200);
     }
 
     /**
@@ -58,6 +80,8 @@ class DepartamentoController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $departamento = Departamento::findOrFail($id);
+        $departamento->delete();
+        return response()->json(['message' => 'Departamento eliminado correctamente'], 200);
     }
 }
